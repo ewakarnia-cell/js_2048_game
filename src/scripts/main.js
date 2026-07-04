@@ -1,193 +1,106 @@
 'use strict';
 
-class Game {
-  constructor(initialState = Game.getEmptyState()) {
-    this.initialState = this.cloneState(initialState);
-    this.state = this.cloneState(initialState);
-    this.score = 0;
-    this.status = 'idle';
-  }
+const Game = require('../modules/Game.class');
 
-  moveLeft() {
-    this.move('left');
-  }
+const game = new Game();
 
-  moveRight() {
-    this.move('right');
-  }
+const button = document.querySelector('.button');
+const score = document.querySelector('.game-score');
+const cells = [...document.querySelectorAll('.field-cell')];
 
-  moveUp() {
-    this.move('up');
-  }
+const startMessage = document.querySelector('.message-start');
+const winMessage = document.querySelector('.message-win');
+const loseMessage = document.querySelector('.message-lose');
 
-  moveDown() {
-    this.move('down');
-  }
+function renderBoard() {
+  const state = game.getState().flat();
 
-  getScore() {
-    return this.score;
-  }
+  cells.forEach((cell, index) => {
+    const value = state[index];
 
-  getState() {
-    return this.state;
-  }
+    cell.className = 'field-cell';
+    cell.textContent = '';
 
-  getStatus() {
-    return this.status;
-  }
-
-  start() {
-    if (this.status !== 'idle') {
-      return;
+    if (value > 0) {
+      cell.classList.add(`field-cell--${value}`);
+      cell.textContent = value;
     }
+  });
+}
 
-    this.status = 'playing';
-    this.addRandomCell();
-    this.addRandomCell();
+function renderMessages() {
+  startMessage.classList.add('hidden');
+  winMessage.classList.add('hidden');
+  loseMessage.classList.add('hidden');
+
+  if (game.getStatus() === 'idle') {
+    startMessage.classList.remove('hidden');
   }
 
-  restart() {
-    this.state = this.cloneState(this.initialState);
-    this.score = 0;
-    this.status = 'idle';
+  if (game.getStatus() === 'win') {
+    winMessage.classList.remove('hidden');
   }
 
-  move(direction) {
-    if (this.status !== 'playing') {
-      return;
-    }
-
-    const previousState = this.cloneState(this.state);
-    const previousScore = this.score;
-
-    if (direction === 'left') {
-      this.state = this.state.map((row) => this.moveRowLeft(row));
-    }
-
-    if (direction === 'right') {
-      this.state = this.state.map((row) =>
-        this.moveRowLeft([...row].reverse()).reverse(),
-      );
-    }
-
-    if (direction === 'up') {
-      this.state = this.transpose(this.state).map((row) =>
-        this.moveRowLeft(row),
-      );
-      this.state = this.transpose(this.state);
-    }
-
-    if (direction === 'down') {
-      this.state = this.transpose(this.state).map((row) =>
-        this.moveRowLeft([...row].reverse()).reverse(),
-      );
-      this.state = this.transpose(this.state);
-    }
-
-    if (!this.areStatesEqual(previousState, this.state)) {
-      this.addRandomCell();
-      this.updateStatus();
-    } else {
-      this.score = previousScore;
-    }
-  }
-
-  moveRowLeft(row) {
-    const numbers = row.filter((cell) => cell !== 0);
-    const result = [];
-
-    for (let i = 0; i < numbers.length; i++) {
-      if (numbers[i] === numbers[i + 1]) {
-        const mergedCell = numbers[i] * 2;
-
-        result.push(mergedCell);
-        this.score += mergedCell;
-        i++;
-      } else {
-        result.push(numbers[i]);
-      }
-    }
-
-    while (result.length < 4) {
-      result.push(0);
-    }
-
-    return result;
-  }
-
-  addRandomCell() {
-    const emptyCells = [];
-
-    this.state.forEach((row, currentRowIndex) => {
-      row.forEach((cell, currentCellIndex) => {
-        if (cell === 0) {
-          emptyCells.push([currentRowIndex, currentCellIndex]);
-        }
-      });
-    });
-
-    if (emptyCells.length === 0) {
-      return;
-    }
-
-    const randomIndex = Math.floor(Math.random() * emptyCells.length);
-    const [targetRowIndex, targetCellIndex] = emptyCells[randomIndex];
-
-    this.state[targetRowIndex][targetCellIndex] = Math.random() < 0.1 ? 4 : 2;
-  }
-
-  updateStatus() {
-    if (this.state.some((row) => row.includes(2048))) {
-      this.status = 'win';
-
-      return;
-    }
-
-    if (!this.canMove()) {
-      this.status = 'lose';
-    }
-  }
-
-  canMove() {
-    if (this.state.some((row) => row.includes(0))) {
-      return true;
-    }
-
-    for (let row = 0; row < 4; row++) {
-      for (let cell = 0; cell < 4; cell++) {
-        if (cell < 3 && this.state[row][cell] === this.state[row][cell + 1]) {
-          return true;
-        }
-
-        if (row < 3 && this.state[row][cell] === this.state[row + 1][cell]) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  transpose(state) {
-    return state[0].map((_, index) => state.map((row) => row[index]));
-  }
-
-  areStatesEqual(firstState, secondState) {
-    return JSON.stringify(firstState) === JSON.stringify(secondState);
-  }
-
-  cloneState(state) {
-    return state.map((row) => [...row]);
-  }
-
-  static getEmptyState() {
-    return [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ];
+  if (game.getStatus() === 'lose') {
+    loseMessage.classList.remove('hidden');
   }
 }
 
-module.exports = Game;
+function renderButton() {
+  if (game.getStatus() === 'idle') {
+    button.classList.add('start');
+    button.classList.remove('restart');
+    button.textContent = 'Start';
+
+    return;
+  }
+
+  button.classList.remove('start');
+  button.classList.add('restart');
+  button.textContent = 'Restart';
+}
+
+function render() {
+  score.textContent = game.getScore();
+
+  renderBoard();
+  renderMessages();
+  renderButton();
+}
+
+button.addEventListener('click', () => {
+  if (game.getStatus() === 'idle') {
+    game.start();
+  } else {
+    game.restart();
+    game.start();
+  }
+
+  render();
+});
+
+document.addEventListener('keydown', (keyboardEvent) => {
+  if (game.getStatus() !== 'playing') {
+    return;
+  }
+
+  const moves = {
+    ArrowLeft: () => game.moveLeft(),
+    ArrowRight: () => game.moveRight(),
+    ArrowUp: () => game.moveUp(),
+    ArrowDown: () => game.moveDown(),
+  };
+
+  const move = moves[keyboardEvent.key];
+
+  if (!move) {
+    return;
+  }
+
+  keyboardEvent.preventDefault();
+
+  move();
+  render();
+});
+
+render();

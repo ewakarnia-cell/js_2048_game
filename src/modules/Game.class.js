@@ -65,23 +65,25 @@ class Game {
     }
 
     if (direction === 'right') {
-      this.state = this.state.map((row) =>
-        this.moveRowLeft([...row].reverse()).reverse(),
-      );
+      this.state = this.state.map((row) => {
+        return this.moveRowLeft([...row].reverse()).reverse();
+      });
     }
 
     if (direction === 'up') {
-      this.state = this.transpose(this.state).map((row) =>
-        this.moveRowLeft(row),
-      );
-      this.state = this.transpose(this.state);
+      const movedState = this.transpose(this.state).map((row) => {
+        return this.moveRowLeft(row);
+      });
+
+      this.state = this.transpose(movedState);
     }
 
     if (direction === 'down') {
-      this.state = this.transpose(this.state).map((row) =>
-        this.moveRowLeft([...row].reverse()).reverse(),
-      );
-      this.state = this.transpose(this.state);
+      const movedState = this.transpose(this.state).map((row) => {
+        return this.moveRowLeft([...row].reverse()).reverse();
+      });
+
+      this.state = this.transpose(movedState);
     }
 
     if (!this.areStatesEqual(previousState, this.state)) {
@@ -118,10 +120,10 @@ class Game {
   addRandomCell() {
     const emptyCells = [];
 
-    this.state.forEach((row, rowIndex) => {
-      row.forEach((cell, cellIndex) => {
+    this.state.forEach((row, currentRowIndex) => {
+      row.forEach((cell, currentCellIndex) => {
         if (cell === 0) {
-          emptyCells.push([rowIndex, cellIndex]);
+          emptyCells.push([currentRowIndex, currentCellIndex]);
         }
       });
     });
@@ -131,9 +133,9 @@ class Game {
     }
 
     const randomIndex = Math.floor(Math.random() * emptyCells.length);
-    const [rowIndex, cellIndex] = emptyCells[randomIndex];
+    const [targetRowIndex, targetCellIndex] = emptyCells[randomIndex];
 
-    this.state[rowIndex][cellIndex] = Math.random() < 0.1 ? 4 : 2;
+    this.state[targetRowIndex][targetCellIndex] = Math.random() < 0.1 ? 4 : 2;
   }
 
   updateStatus() {
