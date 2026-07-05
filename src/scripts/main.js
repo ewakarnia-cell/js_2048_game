@@ -1,6 +1,6 @@
-'use strict';
+﻿'use strict';
 
-import Game from '../modules/Game.class.js';
+import Game from '../modules/Game.class';
 
 const game = new Game();
 
@@ -104,3 +104,4 @@ document.addEventListener('keydown', (keyboardEvent) => {
 });
 
 render();
+
